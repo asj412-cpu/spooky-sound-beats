@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Spooky Sound Beats</title>
+<link rel="icon" href="data:,"><title>Spooky Sound Beats</title>
 <style>
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none}
 body{margin:0;min-height:100vh;font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;color:#fff;font-size:24px;overflow-x:hidden;
@@ -53,6 +53,7 @@ button.on{background:#ff7b00;box-shadow:0 6px 0 #9a4300}
 <div class="row">
 <button id="bPlay" aria-label="Play beat">▶️ Play</button>
 <button id="bClear" aria-label="Clear beat">🧹 Clear</button>
+<button id="bMusic" aria-label="Background music">🎶 Music</button>
 <button id="bVoice" class="on" aria-label="Voice on or off">🗣️ Voice</button>
 <span style="font-size:32px">👇 1 2 3 4 5 6 7 8</span></div>
 <div id="seq"></div>
@@ -87,48 +88,76 @@ function sound(t,f){const a=ac(),n=a.currentTime,g=a.createGain();g.connect(a.de
  if(t==='kick'){const o=a.createOscillator();o.frequency.setValueAtTime(150,n);o.frequency.exponentialRampToValueAtTime(40,n+.3);g.gain.setValueAtTime(1,n);g.gain.exponentialRampToValueAtTime(.001,n+.4);o.connect(g);o.start(n);o.stop(n+.4)}
  else if(t==='snare'||t==='hat'||t==='clap'){const b=a.createBuffer(1,a.sampleRate*.3,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=a.createBufferSource();s.buffer=b;const fl=a.createBiquadFilter();fl.type=t==='hat'?'highpass':'bandpass';fl.frequency.value=t==='hat'?7000:1800;s.connect(fl);fl.connect(g);const L=t==='hat'?.08:.22;g.gain.setValueAtTime(.7,n);g.gain.exponentialRampToValueAtTime(.001,n+L);s.start(n);s.stop(n+.3)}
  else{const o=a.createOscillator(),o2=a.createOscillator();o.type=t==='bell'?'sine':'sawtooth';o2.type='triangle';o.frequency.value=f;o2.frequency.value=f*1.01;const lf=a.createOscillator(),lg=a.createGain();lf.frequency.value=6;lg.gain.value=8;lf.connect(lg);lg.connect(o.frequency);const fl=a.createBiquadFilter();fl.frequency.value=1200;o.connect(fl);o2.connect(fl);fl.connect(g);g.gain.setValueAtTime(.001,n);g.gain.exponentialRampToValueAtTime(.3,n+.03);g.gain.exponentialRampToValueAtTime(.001,n+.6);[o,o2,lf].forEach(x=>{x.start(n);x.stop(n+.6)})}}
-function speak(s,r=1){if(!voice||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.rate=r;u.pitch=1.1;speechSynthesis.speak(u)}
-function padSay(p,long){speak(long?`${p.c.split('').join(' ')}. ${p.say}, as in ${p.w}`:p.w)}
+const V='?v=2';const BUF={};let curSrc=null;
+function loadAll(){const a=ac();const keys=[...PADS.flatMap(p=>[p.c,'b_'+p.c]),...WORDS.flatMap(w=>['w_'+w[0],'y_'+w[0]]),'try1','try2','win','p_noun','p_verb','p_adj','help_beat','help_pos','von'];
+ keys.forEach(k=>{if(BUF[k])return;BUF[k]='loading';fetch('audio/'+k+'.mp3'+V).then(r=>r.arrayBuffer()).then(d=>a.decodeAudioData(d)).then(b=>BUF[k]=b).catch(()=>delete BUF[k])})}
+function clip(k,when,solo=true,gain=1){const a=ac(),b=BUF[k];if(!voice||!b||b==='loading')return;if(solo&&curSrc){try{curSrc.stop()}catch(e){}}
+ const s=a.createBufferSource(),g=a.createGain();s.buffer=b;g.gain.value=gain;s.connect(g);g.connect(a.destination);s.start(when||a.currentTime);if(solo)curSrc=s}
+function speak(){} 
+function padSay(p){clip(p.c)}
+// groove engine
+const BPM=96,SIX=60/BPM/4;let musicOn=false,next=0,six=0,timer=null;
+const ROOT=[55,55,43.65,41.2];// A A F E (bass)
+const CH=[[220,261.6,329.6],[220,261.6,329.6],[174.6,220,261.6],[164.8,207.7,246.9]];
+function kick(t){const a=AC,o=a.createOscillator(),g=a.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(42,t+.15);g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.connect(g);g.connect(MIX);o.start(t);o.stop(t+.4)}
+let NB;function noise(){if(!NB){NB=AC.createBuffer(1,AC.sampleRate*.5,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NB}
+function snare(t){const s=AC.createBufferSource();s.buffer=noise();const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1900;f.Q.value=.7;const g=AC.createGain();g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);s.connect(f);f.connect(g);g.connect(MIX);s.start(t);s.stop(t+.25);
+ const o=AC.createOscillator(),g2=AC.createGain();o.frequency.value=190;g2.gain.setValueAtTime(.3,t);g2.gain.exponentialRampToValueAtTime(.001,t+.1);o.connect(g2);g2.connect(MIX);o.start(t);o.stop(t+.12)}
+function hat(t,v=.15){const s=AC.createBufferSource();s.buffer=noise();const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=8000;const g=AC.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+.05);s.connect(f);f.connect(g);g.connect(MIX);s.start(t);s.stop(t+.06)}
+function bass(t,f,d){const o=AC.createOscillator(),fl=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;fl.type='lowpass';fl.frequency.setValueAtTime(900,t);fl.frequency.exponentialRampToValueAtTime(180,t+d);g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(fl);fl.connect(g);g.connect(MIX);o.start(t);o.stop(t+d)}
+function organ(t,ch,d){ch.forEach(f=>[1,2,.5].forEach((m,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f*m;const lv=[.05,.025,.03][i];g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(lv,t+.15);g.gain.setValueAtTime(lv,t+d-.2);g.gain.linearRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(MIX);o.start(t);o.stop(t+d)}))}
+let MIX;function mix(){if(!MIX){MIX=AC.createGain();MIX.gain.value=.7;const c=AC.createDynamicsCompressor();MIX.connect(c);c.connect(AC.destination)}}
+function sched(){while(next<AC.currentTime+.12){const t=next,bar=Math.floor(six/16)%4,p=six%16;
+ if(p===0||p===10)kick(t);if(p===4||p===12)snare(t);if(p%2===0)hat(t,p%4?.08:.15);else if(p===15)hat(t,.06);
+ if([0,3,6,8,11,14].includes(p))bass(t,ROOT[bar]*(p===8?2:1),SIX*2.5);if(p===0)organ(t,CH[bar],SIX*16);
+ if(playing&&p%2===0){const st=p/2;const v=seq[st];const tt=t;setTimeout(()=>showStep(st),Math.max(0,(tt-AC.currentTime)*1000));
+  if(v!=null)clip('b_'+PADS[v].c,t,false,1.1)}
+ next+=SIX;six++}}
+function startEngine(){ac();mix();if(timer)return;next=AC.currentTime+.05;six=0;timer=setInterval(sched,25)}
+function stopEngine(){if(!musicOn&&!playing){clearInterval(timer);timer=null}}
+function showStep(st){const c=seqEl.children;[...c].forEach(x=>x.classList.remove('now'));if(!playing)return;c[st].classList.add('now');const v=seq[st];if(v!=null){const e=padsEl.children[v];e.classList.remove('hit');void e.offsetWidth;e.classList.add('hit')}}
 const padsEl=document.getElementById('pads'),seqEl=document.getElementById('seq');
 PADS.forEach((p,k)=>{const d=document.createElement('div');d.className='pad';d.style.animationDelay=(k*.2)+'s';d.innerHTML=`<div class="ic">${p.i}</div><div class="lb">${p.c}</div>`;
- d.onclick=()=>{sound(p.t,p.f);padSay(p,true);d.classList.remove('hit');void d.offsetWidth;d.classList.add('hit');
+ d.onclick=()=>{loadAll();sound(p.t,p.f);padSay(p);d.classList.remove('hit');void d.offsetWidth;d.classList.add('hit');
   document.querySelectorAll('.pad').forEach(x=>x.classList.remove('sel'));sel=k;d.classList.add('sel');
   const e=seq.indexOf(null);};padsEl.appendChild(d)});
 function drawSeq(){seqEl.innerHTML='';seq.forEach((v,i)=>{const s=document.createElement('div');s.className='step';s.innerHTML=v==null?`<div class="lb" style="color:#ffb34788">${i+1}</div>`:`<div class="ic">${PADS[v].i}</div><div class="lb">${PADS[v].c}</div>`;
  s.onclick=()=>{if(sel!=null&&seq[i]!==sel){seq[i]=sel;sound(PADS[sel].t,PADS[sel].f)}else seq[i]=null;drawSeq()};seqEl.appendChild(s)})}
 drawSeq();
-function tick(){const st=seqEl.children;[...st].forEach(x=>x.classList.remove('now'));st[stepI].classList.add('now');const v=seq[stepI];
+function tickOLD(){const st=seqEl.children;[...st].forEach(x=>x.classList.remove('now'));st[stepI].classList.add('now');const v=seq[stepI];
  if(v!=null){const p=PADS[v];sound(p.t,p.f);speak(p.c.length>1?p.say:p.w,1.3);padsEl.children[v].classList.remove('hit');void padsEl.children[v].offsetWidth;padsEl.children[v].classList.add('hit')}
  else if(stepI%2==0)sound('hat');stepI=(stepI+1)%8}
 const bPlay=document.getElementById('bPlay');
-bPlay.onclick=()=>{ac();if(playing){clearInterval(playing);playing=null;bPlay.textContent='▶️ Play';bPlay.classList.remove('on')}else{stepI=0;tick();playing=setInterval(tick,750);bPlay.textContent='⏸️ Stop';bPlay.classList.add('on')}};
+bPlay.onclick=()=>{loadAll();if(playing){playing=null;bPlay.textContent='▶️ Play';bPlay.classList.remove('on');showStep(0);stopEngine()}else{playing=true;bPlay.textContent='⏸️ Stop';bPlay.classList.add('on');if(timer){clearInterval(timer);timer=null}startEngine()}};
+const bM=document.getElementById('bMusic');bM.onclick=()=>{loadAll();musicOn=!musicOn;bM.classList.toggle('on',musicOn);if(musicOn)startEngine();else stopEngine()};
 document.getElementById('bClear').onclick=()=>{seq=Array(8).fill(null);drawSeq()};
-const bV=document.getElementById('bVoice');bV.onclick=()=>{voice=!voice;bV.classList.toggle('on',voice);if(voice)speak('Voice on')};
+const bV=document.getElementById('bVoice');bV.onclick=()=>{voice=!voice;bV.classList.toggle('on',voice);if(voice)clip('von')};
 // POS
 const cardsEl=document.getElementById('cards');let picked=null;
 function deal(){cardsEl.innerHTML='';document.querySelectorAll('.pot .in').forEach(x=>x.textContent='');
  [...WORDS].sort(()=>Math.random()-.5).forEach(w=>{const c=document.createElement('div');c.className='card';c.dataset.k=w[1];c.dataset.w=w[0];c.innerHTML=`<div class="ic">${w[2]}</div>${w[0]}`;attach(c);cardsEl.appendChild(c)})}
 function attach(c){let ghost=null,moved=false,sx,sy;
- c.onpointerdown=e=>{ac();sx=e.clientX;sy=e.clientY;moved=false;c.setPointerCapture(e.pointerId)};
+ c.onpointerdown=e=>{loadAll();sx=e.clientX;sy=e.clientY;moved=false;c.setPointerCapture(e.pointerId)};
  c.onpointermove=e=>{if(!c.hasPointerCapture(e.pointerId))return;if(!moved&&Math.hypot(e.clientX-sx,e.clientY-sy)>12){moved=true;ghost=c.cloneNode(true);ghost.classList.add('drag');document.body.appendChild(ghost);c.style.opacity=.3}
   if(ghost){ghost.style.left=(e.clientX-60)+'px';ghost.style.top=(e.clientY-60)+'px'}};
  c.onpointerup=e=>{if(ghost){ghost.remove();ghost=null;c.style.opacity=1;const el=document.elementFromPoint(e.clientX,e.clientY),pot=el&&el.closest('.pot');if(pot)drop(c,pot)}
-  else{document.querySelectorAll('.card').forEach(x=>x.classList.remove('picked'));picked=c;c.classList.add('picked');speak(c.dataset.w)}}}
-document.querySelectorAll('.pot').forEach(p=>p.onclick=()=>{if(picked)drop(picked,p);else speak(p.querySelector('.lb').textContent)});
+  else{document.querySelectorAll('.card').forEach(x=>x.classList.remove('picked'));picked=c;c.classList.add('picked');clip('w_'+c.dataset.w)}}}
+document.querySelectorAll('.pot').forEach(p=>p.onclick=()=>{if(picked)drop(picked,p);else clip('p_'+p.dataset.k)});
 const NAMES={noun:'noun, a thing',verb:'verb, an action',adj:'adjective, describes something'};
 function drop(c,pot){picked=null;c.classList.remove('picked');
- if(c.dataset.k===pot.dataset.k){sound('kick');setTimeout(()=>sound('bell',523),150);setTimeout(()=>sound('bell',659),300);speak(`Yes! ${c.dataset.w} is a ${NAMES[pot.dataset.k]}!`);confetti();
+ if(c.dataset.k===pot.dataset.k){sound('kick');setTimeout(()=>sound('bell',523),150);setTimeout(()=>sound('bell',659),300);clip('y_'+c.dataset.w);confetti();
   pot.querySelector('.in').textContent+=c.querySelector('.ic').textContent;c.remove();
-  if(!cardsEl.children.length)setTimeout(()=>{speak('You did it! Spooktacular!');confetti();confetti()},1500)}
- else{pot.classList.remove('wob');void pot.offsetWidth;pot.classList.add('wob');c.classList.remove('wob');void c.offsetWidth;c.classList.add('wob');sound('synth',98);speak(`Hmm, try again! ${c.dataset.w}.`)}}
+  if(!cardsEl.children.length)setTimeout(()=>{clip('win');confetti();confetti()},1500)}
+ else{pot.classList.remove('wob');void pot.offsetWidth;pot.classList.add('wob');c.classList.remove('wob');void c.offsetWidth;c.classList.add('wob');sound('synth',98);clip(Math.random()<.5?'try1':'try2')}}
 document.getElementById('bReset').onclick=deal;deal();
 function confetti(){const cols=['#ff7b00','#a66bff','#5dff9e','#ffe066','#fff'];for(let i=0;i<60;i++){const d=document.createElement('div');d.className='conf';d.style.left=Math.random()*100+'vw';d.style.background=cols[i%5];d.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}}
 // modes
 const HELP={beat:'Tap a spooky picture to hear its sound. Then tap a box from 1 to 8 to put it in your beat. Press play to hear your spooky beat!',pos:'Drag each word card into the right cauldron. Green is for nouns, things. Red is for verbs, actions. Orange is for adjectives, words that describe. Or tap a card, then tap a cauldron.'};
 let mode='beat';function setMode(m){mode=m;document.getElementById('beat').classList.toggle('hidden',m!=='beat');document.getElementById('pos').classList.toggle('hidden',m!=='pos');
- document.getElementById('bBeat').classList.toggle('on',m==='beat');document.getElementById('bPos').classList.toggle('on',m==='pos');if(playing)bPlay.click();speak(HELP[m])}
+ document.getElementById('bBeat').classList.toggle('on',m==='beat');document.getElementById('bPos').classList.toggle('on',m==='pos');if(playing)bPlay.click();loadAll();setTimeout(()=>clip('help_'+m),150)}
 document.getElementById('bBeat').onclick=()=>setMode('beat');document.getElementById('bPos').onclick=()=>setMode('pos');
-document.getElementById('bHelp').onclick=()=>speak(HELP[mode]);
+document.getElementById('bHelp').onclick=()=>{loadAll();setTimeout(()=>clip('help_'+mode),BUF['help_'+mode]?0:600)};
+document.addEventListener('pointerdown',()=>loadAll(),{once:true});
 // sky
 for(let i=0;i<40;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'vw';s.style.top=Math.random()*60+'vh';s.style.animationDelay=Math.random()*2+'s';document.body.prepend(s)}
 for(let i=0;i<4;i++){const b=document.createElement('div');b.className='batfly';b.textContent='🦇';b.style.top=(5+i*18)+'vh';b.style.animationDuration=(12+i*5)+'s';b.style.animationDelay=(-i*4)+'s';document.body.prepend(b)}
