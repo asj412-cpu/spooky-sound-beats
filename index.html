@@ -1,0 +1,135 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spooky Sound Beats</title>
+<style>
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none}
+body{margin:0;min-height:100vh;font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;color:#fff;font-size:24px;overflow-x:hidden;
+background:radial-gradient(circle at 85% 12%,#5b2a86 0,#2a0f4a 35%,#12052a 100%)}
+#moon{position:fixed;top:30px;right:60px;width:130px;height:130px;border-radius:50%;background:#fff6c8;box-shadow:0 0 60px 25px #ffe98a88;z-index:0}
+.star{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;animation:tw 2s infinite alternate}
+@keyframes tw{to{opacity:.2}}
+.batfly{position:fixed;font-size:48px;z-index:0;animation:fly linear infinite}
+@keyframes fly{from{transform:translateX(-120px) translateY(0)}50%{transform:translateX(55vw) translateY(-40px)}to{transform:translateX(110vw) translateY(10px)}}
+main{position:relative;z-index:1;max-width:1300px;margin:auto;padding:14px}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:52px;margin:6px 0;color:#ffb347;text-shadow:0 0 18px #ff7b00}
+button{font-family:inherit;font-size:32px;border:none;border-radius:22px;padding:12px 22px;cursor:pointer;color:#fff;background:#7b3fe4;box-shadow:0 6px 0 #3d1680;transition:transform .1s}
+button:active{transform:translateY(5px);box-shadow:0 1px 0 #3d1680}
+button.on{background:#ff7b00;box-shadow:0 6px 0 #9a4300}
+#pads{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:16px 0}
+.pad{background:linear-gradient(#3b1a66,#24104a);border:4px solid #a66bff;border-radius:28px;padding:10px;text-align:center;cursor:pointer;box-shadow:0 0 18px #a66bff66;animation:bob 3s ease-in-out infinite}
+.pad .ic{font-size:64px;line-height:1.1}.pad .lb{font-size:48px;font-weight:bold;color:#ffe066}
+.pad.hit{animation:pop .3s;border-color:#ffe066;box-shadow:0 0 40px #ffe066}
+.pad.sel{border-color:#5dff9e;box-shadow:0 0 30px #5dff9e}
+@keyframes bob{50%{transform:translateY(-5px)}}
+@keyframes pop{50%{transform:scale(1.15)}}
+#seq{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+.step{min-height:130px;border:4px dashed #ffb347;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#ffffff10}
+.step .ic{font-size:48px}.step .lb{font-size:36px;color:#ffe066;font-weight:bold}
+.step.now{background:#ff7b0088;border-style:solid;transform:scale(1.08)}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0;align-items:center}
+#cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;min-height:130px}
+.card{background:#fff3d6;color:#3b1a66;border-radius:22px;padding:10px 18px;text-align:center;cursor:grab;touch-action:none;box-shadow:0 6px 0 #c9a96b;font-size:36px;font-weight:bold}
+.card .ic{font-size:56px}.card.drag{position:fixed;z-index:50;pointer-events:none;transform:scale(1.1) rotate(-4deg)}
+.card.picked{outline:6px solid #5dff9e}
+#pots{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+.pot{border-radius:40px 40px 90px 90px;padding:16px;text-align:center;min-height:230px;border:5px solid #000;cursor:pointer}
+.pot .ic{font-size:72px}.pot .lb{font-size:40px;font-weight:bold}.pot .in{font-size:40px;min-height:50px}
+.pot.n{background:#2e8b57}.pot.v{background:#c0392b}.pot.a{background:#d68910}
+.wob{animation:wob .5s}@keyframes wob{25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.hidden{display:none}
+.conf{position:fixed;top:-20px;width:14px;height:20px;z-index:99;animation:fall 1.8s linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media(max-width:900px){#pads{grid-template-columns:repeat(3,1fr)}#seq{grid-template-columns:repeat(4,1fr)}}
+</style></head><body>
+<div id="moon"></div>
+<main>
+<header><h1>🎃 Spooky Sound Beats</h1>
+<button id="bBeat" class="on" aria-label="Beat mode">🥁 Beats</button>
+<button id="bPos" aria-label="Word cauldron mode">🧪 Words</button>
+<button id="bHelp" aria-label="Hear instructions">🔊 Help</button></header>
+
+<section id="beat">
+<div id="pads"></div>
+<div class="row">
+<button id="bPlay" aria-label="Play beat">▶️ Play</button>
+<button id="bClear" aria-label="Clear beat">🧹 Clear</button>
+<button id="bVoice" class="on" aria-label="Voice on or off">🗣️ Voice</button>
+<span style="font-size:32px">👇 1 2 3 4 5 6 7 8</span></div>
+<div id="seq"></div>
+</section>
+
+<section id="pos" class="hidden">
+<div id="cards"></div>
+<div id="pots">
+<div class="pot n" data-k="noun"><div class="ic">🦇🏠</div><div class="lb">NOUN</div><div class="in"></div></div>
+<div class="pot v" data-k="verb"><div class="ic">🏃‍♀️💨</div><div class="lb">VERB</div><div class="in"></div></div>
+<div class="pot a" data-k="adj"><div class="ic">🎨✨</div><div class="lb">ADJECTIVE</div><div class="in"></div></div>
+</div>
+<div class="row"><button id="bReset" aria-label="New round">🔄 Again</button></div>
+</section>
+</main>
+<script>
+const PADS=[
+{c:'sh',w:'ship',i:'👻',say:'shh',f:110,t:'kick'},
+{c:'ch',w:'chip',i:'🎃',say:'ch',f:147,t:'snare'},
+{c:'th',w:'thumb',i:'💀',say:'th',f:165,t:'hat'},
+{c:'ng',w:'ring',i:'🦇',say:'ng',f:196,t:'synth'},
+{c:'lp',w:'help',i:'🧙',say:'lp',f:220,t:'synth'},
+{c:'ck',w:'duck',i:'🕷️',say:'ck',f:247,t:'clap'},
+{c:'st',w:'stop',i:'🍬',say:'st',f:262,t:'hat'},
+{c:'wh',w:'whale',i:'🌕',say:'wh',f:294,t:'synth'},
+{c:'a',w:'cat',i:'🐈‍⬛',say:'ah',f:330,t:'bell'},
+{c:'o',w:'pot',i:'🧪',say:'ah',f:392,t:'bell'}];
+const WORDS=[['bat','noun','🦇'],['pumpkin','noun','🎃'],['fly','verb','🕊️'],['creep','verb','🐾'],['spooky','adj','👻'],['orange','adj','🟠']];
+let AC,voice=true,seq=Array(8).fill(null),sel=null,playing=null,stepI=0;
+function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}
+function sound(t,f){const a=ac(),n=a.currentTime,g=a.createGain();g.connect(a.destination);
+ if(t==='kick'){const o=a.createOscillator();o.frequency.setValueAtTime(150,n);o.frequency.exponentialRampToValueAtTime(40,n+.3);g.gain.setValueAtTime(1,n);g.gain.exponentialRampToValueAtTime(.001,n+.4);o.connect(g);o.start(n);o.stop(n+.4)}
+ else if(t==='snare'||t==='hat'||t==='clap'){const b=a.createBuffer(1,a.sampleRate*.3,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=a.createBufferSource();s.buffer=b;const fl=a.createBiquadFilter();fl.type=t==='hat'?'highpass':'bandpass';fl.frequency.value=t==='hat'?7000:1800;s.connect(fl);fl.connect(g);const L=t==='hat'?.08:.22;g.gain.setValueAtTime(.7,n);g.gain.exponentialRampToValueAtTime(.001,n+L);s.start(n);s.stop(n+.3)}
+ else{const o=a.createOscillator(),o2=a.createOscillator();o.type=t==='bell'?'sine':'sawtooth';o2.type='triangle';o.frequency.value=f;o2.frequency.value=f*1.01;const lf=a.createOscillator(),lg=a.createGain();lf.frequency.value=6;lg.gain.value=8;lf.connect(lg);lg.connect(o.frequency);const fl=a.createBiquadFilter();fl.frequency.value=1200;o.connect(fl);o2.connect(fl);fl.connect(g);g.gain.setValueAtTime(.001,n);g.gain.exponentialRampToValueAtTime(.3,n+.03);g.gain.exponentialRampToValueAtTime(.001,n+.6);[o,o2,lf].forEach(x=>{x.start(n);x.stop(n+.6)})}}
+function speak(s,r=1){if(!voice||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.rate=r;u.pitch=1.1;speechSynthesis.speak(u)}
+function padSay(p,long){speak(long?`${p.c.split('').join(' ')}. ${p.say}, as in ${p.w}`:p.w)}
+const padsEl=document.getElementById('pads'),seqEl=document.getElementById('seq');
+PADS.forEach((p,k)=>{const d=document.createElement('div');d.className='pad';d.style.animationDelay=(k*.2)+'s';d.innerHTML=`<div class="ic">${p.i}</div><div class="lb">${p.c}</div>`;
+ d.onclick=()=>{sound(p.t,p.f);padSay(p,true);d.classList.remove('hit');void d.offsetWidth;d.classList.add('hit');
+  document.querySelectorAll('.pad').forEach(x=>x.classList.remove('sel'));sel=k;d.classList.add('sel');
+  const e=seq.indexOf(null);};padsEl.appendChild(d)});
+function drawSeq(){seqEl.innerHTML='';seq.forEach((v,i)=>{const s=document.createElement('div');s.className='step';s.innerHTML=v==null?`<div class="lb" style="color:#ffb34788">${i+1}</div>`:`<div class="ic">${PADS[v].i}</div><div class="lb">${PADS[v].c}</div>`;
+ s.onclick=()=>{if(sel!=null&&seq[i]!==sel){seq[i]=sel;sound(PADS[sel].t,PADS[sel].f)}else seq[i]=null;drawSeq()};seqEl.appendChild(s)})}
+drawSeq();
+function tick(){const st=seqEl.children;[...st].forEach(x=>x.classList.remove('now'));st[stepI].classList.add('now');const v=seq[stepI];
+ if(v!=null){const p=PADS[v];sound(p.t,p.f);speak(p.c.length>1?p.say:p.w,1.3);padsEl.children[v].classList.remove('hit');void padsEl.children[v].offsetWidth;padsEl.children[v].classList.add('hit')}
+ else if(stepI%2==0)sound('hat');stepI=(stepI+1)%8}
+const bPlay=document.getElementById('bPlay');
+bPlay.onclick=()=>{ac();if(playing){clearInterval(playing);playing=null;bPlay.textContent='▶️ Play';bPlay.classList.remove('on')}else{stepI=0;tick();playing=setInterval(tick,750);bPlay.textContent='⏸️ Stop';bPlay.classList.add('on')}};
+document.getElementById('bClear').onclick=()=>{seq=Array(8).fill(null);drawSeq()};
+const bV=document.getElementById('bVoice');bV.onclick=()=>{voice=!voice;bV.classList.toggle('on',voice);if(voice)speak('Voice on')};
+// POS
+const cardsEl=document.getElementById('cards');let picked=null;
+function deal(){cardsEl.innerHTML='';document.querySelectorAll('.pot .in').forEach(x=>x.textContent='');
+ [...WORDS].sort(()=>Math.random()-.5).forEach(w=>{const c=document.createElement('div');c.className='card';c.dataset.k=w[1];c.dataset.w=w[0];c.innerHTML=`<div class="ic">${w[2]}</div>${w[0]}`;attach(c);cardsEl.appendChild(c)})}
+function attach(c){let ghost=null,moved=false,sx,sy;
+ c.onpointerdown=e=>{ac();sx=e.clientX;sy=e.clientY;moved=false;c.setPointerCapture(e.pointerId)};
+ c.onpointermove=e=>{if(!c.hasPointerCapture(e.pointerId))return;if(!moved&&Math.hypot(e.clientX-sx,e.clientY-sy)>12){moved=true;ghost=c.cloneNode(true);ghost.classList.add('drag');document.body.appendChild(ghost);c.style.opacity=.3}
+  if(ghost){ghost.style.left=(e.clientX-60)+'px';ghost.style.top=(e.clientY-60)+'px'}};
+ c.onpointerup=e=>{if(ghost){ghost.remove();ghost=null;c.style.opacity=1;const el=document.elementFromPoint(e.clientX,e.clientY),pot=el&&el.closest('.pot');if(pot)drop(c,pot)}
+  else{document.querySelectorAll('.card').forEach(x=>x.classList.remove('picked'));picked=c;c.classList.add('picked');speak(c.dataset.w)}}}
+document.querySelectorAll('.pot').forEach(p=>p.onclick=()=>{if(picked)drop(picked,p);else speak(p.querySelector('.lb').textContent)});
+const NAMES={noun:'noun, a thing',verb:'verb, an action',adj:'adjective, describes something'};
+function drop(c,pot){picked=null;c.classList.remove('picked');
+ if(c.dataset.k===pot.dataset.k){sound('kick');setTimeout(()=>sound('bell',523),150);setTimeout(()=>sound('bell',659),300);speak(`Yes! ${c.dataset.w} is a ${NAMES[pot.dataset.k]}!`);confetti();
+  pot.querySelector('.in').textContent+=c.querySelector('.ic').textContent;c.remove();
+  if(!cardsEl.children.length)setTimeout(()=>{speak('You did it! Spooktacular!');confetti();confetti()},1500)}
+ else{pot.classList.remove('wob');void pot.offsetWidth;pot.classList.add('wob');c.classList.remove('wob');void c.offsetWidth;c.classList.add('wob');sound('synth',98);speak(`Hmm, try again! ${c.dataset.w}.`)}}
+document.getElementById('bReset').onclick=deal;deal();
+function confetti(){const cols=['#ff7b00','#a66bff','#5dff9e','#ffe066','#fff'];for(let i=0;i<60;i++){const d=document.createElement('div');d.className='conf';d.style.left=Math.random()*100+'vw';d.style.background=cols[i%5];d.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}}
+// modes
+const HELP={beat:'Tap a spooky picture to hear its sound. Then tap a box from 1 to 8 to put it in your beat. Press play to hear your spooky beat!',pos:'Drag each word card into the right cauldron. Green is for nouns, things. Red is for verbs, actions. Orange is for adjectives, words that describe. Or tap a card, then tap a cauldron.'};
+let mode='beat';function setMode(m){mode=m;document.getElementById('beat').classList.toggle('hidden',m!=='beat');document.getElementById('pos').classList.toggle('hidden',m!=='pos');
+ document.getElementById('bBeat').classList.toggle('on',m==='beat');document.getElementById('bPos').classList.toggle('on',m==='pos');if(playing)bPlay.click();speak(HELP[m])}
+document.getElementById('bBeat').onclick=()=>setMode('beat');document.getElementById('bPos').onclick=()=>setMode('pos');
+document.getElementById('bHelp').onclick=()=>speak(HELP[mode]);
+// sky
+for(let i=0;i<40;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'vw';s.style.top=Math.random()*60+'vh';s.style.animationDelay=Math.random()*2+'s';document.body.prepend(s)}
+for(let i=0;i<4;i++){const b=document.createElement('div');b.className='batfly';b.textContent='🦇';b.style.top=(5+i*18)+'vh';b.style.animationDuration=(12+i*5)+'s';b.style.animationDelay=(-i*4)+'s';document.body.prepend(b)}
+</script></body></html>
